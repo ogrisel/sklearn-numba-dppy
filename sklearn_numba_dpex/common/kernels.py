@@ -36,25 +36,41 @@ def make_apply_elementwise_func(shape, func, work_group_size):
 
 
 @lru_cache
-def make_initialize_to_zeros_kernel(shape, work_group_size, dtype):
+def make_fill_kernel(fill_value, shape, work_group_size, dtype):
     n_items = math.prod(shape)
     global_size = math.ceil(n_items / work_group_size) * work_group_size
-    zero = dtype(0.0)
+    fill_value = dtype(fill_value)
 
     @dpex.kernel
-    def initialize_to_zeros_kernel(data):
+    def fill_kernel(data):
         item_idx = dpex.get_global_id(zero_idx)
 
         if item_idx >= n_items:
             return
 
-        data[item_idx] = zero
+        data[item_idx] = fill_value
 
-    def initialize_to_zeros(data):
+    def fill(data):
         data = dpt.reshape(data, (-1,))
-        initialize_to_zeros_kernel[global_size, work_group_size](data)
+        fill_kernel[global_size, work_group_size](data)
 
-    return initialize_to_zeros
+    return fill
+
+
+@lru_cache
+def make_range_kernel(n_items, work_group_size):
+    global_size = math.ceil(n_items / work_group_size) * work_group_size
+
+    @dpex.kernel
+    def range_kernel(data):
+        item_idx = dpex.get_global_id(zero_idx)
+
+        if item_idx >= n_items:
+            return
+
+        data[item_idx] = item_idx
+
+    return range_kernel[global_size, work_group_size]
 
 
 @lru_cache

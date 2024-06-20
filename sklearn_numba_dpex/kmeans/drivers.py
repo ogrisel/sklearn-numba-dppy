@@ -12,8 +12,8 @@ from sklearn_numba_dpex.common.kernels import (
     make_apply_elementwise_func,
     make_broadcast_division_1d_2d_axis0_kernel,
     make_broadcast_ops_1d_2d_axis1_kernel,
+    make_fill_kernel,
     make_half_l2_norm_2d_axis0_kernel,
-    make_initialize_to_zeros_kernel,
 )
 from sklearn_numba_dpex.common.random import (
     create_xoroshiro128pp_states,
@@ -91,13 +91,15 @@ def lloyd(
         n_samples, n_features, max_work_group_size, compute_dtype
     )
 
-    reset_cluster_sizes_private_copies_kernel = make_initialize_to_zeros_kernel(
+    reset_cluster_sizes_private_copies_kernel = make_fill_kernel(
+        fill_value=0,
         shape=(n_centroids_private_copies, n_clusters),
         work_group_size=max_work_group_size,
         dtype=compute_dtype,
     )
 
-    reset_centroids_private_copies_kernel = make_initialize_to_zeros_kernel(
+    reset_centroids_private_copies_kernel = make_fill_kernel(
+        fill_value=0,
         shape=(n_centroids_private_copies, n_features, n_clusters),
         work_group_size=max_work_group_size,
         dtype=compute_dtype,
